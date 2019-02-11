@@ -1,0 +1,62 @@
+[#if OK_MSG#]<div class="alert alert-success">[#OK_MSG#]</div>[#endif OK_MSG#]
+<div class="row">
+    <div class="col-md-6">
+        <h3>Homebridge Service</h3>
+
+        <div><a href="?mode=sync" class="btn btn-default btn-primary">Fix &amp; Sync Accessories</a></div>
+        &nbsp;
+        <div>
+            <a href="?mode=service_enable" class="btn btn-default">Enable service</a>
+            <a href="?mode=service_disable" class="btn btn-default">Disable service</a>
+        </div>
+        &nbsp;
+        <div>
+            <a href="?mode=service_start" class="btn btn-default">Start</a>
+            <a href="?mode=service_stop" class="btn btn-default">Stop</a>
+            <a href="?mode=service_restart" class="btn btn-default">Restart</a>
+        </div>
+
+
+    </div>
+    <div class="col-md-6">
+        <div id='api_settings'>
+            <form action="?" method="post" enctype="multipart/form-data" name="frmEdit" class="form-horizontal">
+                <legend><#LANG_SECTION_SETTINGS#></legend>
+                <div class="form-group">
+                    <label for="homebridge_home">Homebridge data path:</label>
+                    <input type="text" name="homebridge_home" value="<#HOMEBRIDGE_HOME#>" id="homebridge_home" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="homebridge_id">MajorDoMo accessory id:</label>
+                    <input type="text" name="homebridge_id" value="<#HOMEBRIDGE_ID#>" id="homebridge_id" class="form-control">
+                </div>
+                <div class="form-group">
+                        <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_UPDATE#></button>
+                        <input type="hidden" name="view_mode" value="update_settings">
+                        <input type="hidden" name="mode" value="update">
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<div>
+    Homebridge Service status:
+
+    <script language="javascript">
+        var statusTimer;
+        function updateStatus() {
+            var url='<#ROOTHTML#>ajax/homekit.html?op=status';
+            $.ajax({
+                url: url
+            }).done(function(data) {
+                $('#status_info').html(data);
+                statusTimer=setTimeout('updateStatus();',5000);
+            });
+        }
+        updateStatus();
+    </script>
+    <div id="status_info">zz</div>
+
+</div>
