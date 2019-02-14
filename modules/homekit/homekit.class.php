@@ -213,6 +213,76 @@ class homekit extends module
                 setGlobal('cycle_mqttControl', 'restart');
             }
 
+            //sync cameras
+            if ($this->config['HOMEBRIDGE_HOME']) {
+                $homekit_config_file = $this->config['HOMEBRIDGE_HOME'] . '/config.json';
+            } else {
+                $homekit_config_file = '/home/pi/.homebridge';
+            }
+            if (is_file($homekit_config_file)) {
+                $homekit_data = json_decode(LoadFile($homekit_config_file), true);
+                if (is_array($homekit_data) && is_array($homekit_data['platforms'])) {
+                    $config_updated=0;
+                    $found_platforms=array();
+                    $ip_cameras=SQLSelect("SELECT * FROM devices WHERE TYPE='camera'");
+                    if (count($ip_cameras)>0) {
+                        foreach($homekit_data['platforms'] as &$platform) {
+                            $found_platforms[strtolower($platform['platform'])]=1;
+                        }
+                        if (!$found_platforms['camera-ffmpeg']) {
+                            $homekit_data['platforms'][]=array('platform'=>'Camera-ffmpeg');
+                        }
+                        foreach($homekit_data['platforms'] as &$platform) {
+                            if (strtolower($platform['platform'])=='camera-ffmpeg') {
+                                $cams=array();
+                                foreach($ip_cameras as $camera) {
+                                    $cam_rec=array();
+                                    $cam_rec['name']=$camera['TITLE'];
+                                    $source = '';
+
+                                    $cameraUsername = gg($camera['LINKED_OBJECT'].'.cameraUsername');
+                                    $cameraPassword = gg($camera['LINKED_OBJECT'].'.cameraPassword');
+                                    $snapshot_url = gg($camera['LINKED_OBJECT'].'.snapshotURL');
+                                    $stream_url = gg($camera['LINKED_OBJECT'].'.streamURL');
+                                    $stream_url_hq = gg($camera['LINKED_OBJECT'].'.streamURL_HQ');
+                                    $streamTransport = gg($camera['LINKED_OBJECT'].'.streamTransport');
+
+                                    if ($stream_url_hq) {
+                                        $source=$stream_url_hq;
+                                    } elseif ($stream_url) {
+                                        $source=$stream_url;
+                                    }
+
+                                    if ($source!='') {
+                                        if ($cameraUsername && $cameraPassword) {
+                                            $source = str_replace('://','://'.$cameraUsername.':'.$cameraPassword.'@',$source);
+                                            $snapshot_url = str_replace('://','://'.$cameraUsername.':'.$cameraPassword.'@',$snapshot_url);
+                                        }
+                                        $source='-i '.$source;
+                                        if ($streamTransport!='') {
+                                            $source='-rtsp_transport '.$streamTransport.' '.$source;
+                                        }
+                                        $source='-re '.$source;
+                                        $cam_rec['videoConfig']=array('source'=>$source,'maxStreams'=>2,'maxWidth'=>1280,'maxHeight'=>'720','maxFPS'=>30);
+                                        if ($snapshot_url!='') {
+                                            $cam_rec['stillImageSource']='-i '.$snapshot_url;
+                                        }
+                                        $cams[]=$cam_rec;
+                                    }
+                                }
+                                if (json_encode($platform['cameras'])!=json_encode($cams)) {
+                                    $platform['cameras']=$cams;
+                                    $config_updated=1;
+                                }
+                            }
+                        }
+                    }
+                    if ($config_updated) {
+                        SaveFile($homekit_config_file,json_encode($homekit_data,JSON_PRETTY_PRINT));
+                    }
+                }
+            }
+
             @unlink($out['HOMEBRIDGE_HOME'] . '/persist/AccessoryInfo.' . str_replace(':', '', $old_id) . '.json');
             @unlink($out['HOMEBRIDGE_HOME'] . '/persist/IdentifierCache.' . str_replace(':', '', $old_id) . '.json');
             $this->restartHomebridge();
