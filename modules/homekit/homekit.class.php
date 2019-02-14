@@ -217,7 +217,7 @@ class homekit extends module
             if ($this->config['HOMEBRIDGE_HOME']) {
                 $homekit_config_file = $this->config['HOMEBRIDGE_HOME'] . '/config.json';
             } else {
-                $homekit_config_file = '/home/pi/.homebridge';
+                $homekit_config_file = '/home/pi/.homebridge/config.json';
             }
             if (is_file($homekit_config_file)) {
                 $homekit_data = json_decode(LoadFile($homekit_config_file), true);
@@ -263,7 +263,7 @@ class homekit extends module
                                             $source='-rtsp_transport '.$streamTransport.' '.$source;
                                         }
                                         $source='-re '.$source;
-                                        $cam_rec['videoConfig']=array('source'=>$source,'maxStreams'=>2,'maxWidth'=>1280,'maxHeight'=>'720','maxFPS'=>30);
+                                        $cam_rec['videoConfig']=array('source'=>$source,'maxStreams'=>2,'maxWidth'=>1280,'maxHeight'=>720,'maxFPS'=>30);
                                         if ($snapshot_url!='') {
                                             $cam_rec['stillImageSource']='-i '.$snapshot_url;
                                         }
