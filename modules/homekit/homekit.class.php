@@ -283,9 +283,12 @@ class homekit extends module
                 }
             }
 
-            @unlink($out['HOMEBRIDGE_HOME'] . '/persist/AccessoryInfo.' . str_replace(':', '', $old_id) . '.json');
-            @unlink($out['HOMEBRIDGE_HOME'] . '/persist/IdentifierCache.' . str_replace(':', '', $old_id) . '.json');
-            $this->restartHomebridge();
+            $old_id = $out['HOMEBRIDGE_ID'];
+            $filename = $out['HOMEBRIDGE_HOME'] . '/persist/AccessoryInfo.' . str_replace(':', '', $old_id) . '.json';
+            @unlink($filename);
+            $filename = $out['HOMEBRIDGE_HOME'] . '/persist/IdentifierCache.' . str_replace(':', '', $old_id) . '.json';
+            @unlink($filename);
+            $this->restartHomebridge(1);
             $this->redirect("?ok_msg=" . urlencode('SYNC command sent. Restarting.'));
         }
 
@@ -311,7 +314,7 @@ class homekit extends module
 
     }
 
-    function restartHomebridge()
+    function restartHomebridge($force_refresh = 0)
     {
         $this->getConfig();
         $homebridge_home = $this->config['HOMEBRIDGE_HOME'];
@@ -324,7 +327,7 @@ class homekit extends module
         sleep(5);
         include_once(DIR_MODULES . 'devices/devices.class.php');
         $dv = new devices();
-        $dv->homebridgeSync();
+        $dv->homebridgeSync(0, $force_refresh);
     }
 
     /**
