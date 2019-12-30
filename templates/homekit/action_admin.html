@@ -1,9 +1,11 @@
 [#if OK_MSG#]<div class="alert alert-success">[#OK_MSG#]</div>[#endif OK_MSG#]
 <div class="row">
     <div class="col-md-6">
-        <h3>Homebridge Service</h3>
-
-        <div><a href="?mode=sync" class="btn btn-default btn-primary">Fix &amp; Sync Accessories</a></div>
+        <h3>HomeBridge service</h3>
+        <div>
+        <a href="?mode=sync" class="btn btn-default btn-primary">Sync Accessories</a>
+        <a href="?mode=sync&reset_cache=1" class="btn btn-default btn-warning" onclick="return confirm('Warning: you will have to delete and add MajorDoMo accessory in the Home App on your iPhone/iPad. Please confirm.');">Full reset &amp; Sync Accessories</a>
+        </div>
         &nbsp;
         <div>
             <a href="?mode=service_enable" class="btn btn-default">Enable service</a>

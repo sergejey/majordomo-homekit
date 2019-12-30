@@ -284,10 +284,13 @@ class homekit extends module
             }
 
             $old_id = $out['HOMEBRIDGE_ID'];
-            $filename = $out['HOMEBRIDGE_HOME'] . '/persist/AccessoryInfo.' . str_replace(':', '', $old_id) . '.json';
-            @unlink($filename);
-            $filename = $out['HOMEBRIDGE_HOME'] . '/persist/IdentifierCache.' . str_replace(':', '', $old_id) . '.json';
-            @unlink($filename);
+            $reset_cache=gr('reset_cache');
+            if ($reset_cache) {
+                $filename = $out['HOMEBRIDGE_HOME'] . '/persist/AccessoryInfo.' . str_replace(':', '', $old_id) . '.json';
+                @unlink($filename);
+                $filename = $out['HOMEBRIDGE_HOME'] . '/persist/IdentifierCache.' . str_replace(':', '', $old_id) . '.json';
+                @unlink($filename);
+            }
             $this->restartHomebridge(1);
             $this->redirect("?ok_msg=" . urlencode('SYNC command sent. Restarting.'));
         }
