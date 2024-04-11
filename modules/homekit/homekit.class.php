@@ -136,18 +136,35 @@ class homekit extends module
 
         if (is_file($homekit_config_file)) {
             $homekit_data = json_decode(LoadFile($homekit_config_file), true);
-            //dprint($data);
+            //dprint($homekit_data, 0);
             $out['HOMEBRIDGE_ID'] = $homekit_data['bridge']['username'];
         }
+		
+		$out['MQTT_HOST'] = $this->config['MQTT_HOST'];
+		$out['MQTT_QUERY'] = $this->config['MQTT_QUERY'];
+		if (!$out['MQTT_QUERY']) {
+            $out['MQTT_QUERY'] = 'homebridge';
+        }
+        $out['MQTT_PORT'] = $this->config['MQTT_PORT'];
+        if (!$out['MQTT_HOST']) {
+            $out['MQTT_HOST'] = 'localhost';
+        }
+        if (!$out['MQTT_PORT']) {
+            $out['MQTT_PORT'] = '1883';
+        }
+        $out['MQTT_USERNAME'] = $this->config['MQTT_USERNAME'];
+        $out['MQTT_PASSWORD'] = $this->config['MQTT_PASSWORD'];
+        $out['MQTT_AUTH'] = $this->config['MQTT_AUTH'];
+        $out['DEBUG_MODE'] = $this->config['DEBUG_MODE'];
 
         if ($this->mode == 'service_stop') {
-            safe_exec('sudo service homebridge stop', 1);
+            safe_exec('systemctl stop homebridge.service', 1);
             sleep(2);
             @unlink($homebridge_home . '/cached/cachedAccessories');
             $this->redirect("?ok_msg=" . urlencode('Stop command sent'));
         }
         if ($this->mode == 'service_start') {
-            safe_exec('sudo service homebridge start', 1);
+            safe_exec('systemctl start homebridge.service', 1);
             $this->redirect("?ok_msg=" . urlencode('Start command sent'));
         }
 
@@ -156,9 +173,9 @@ class homekit extends module
         }
 
         if ($this->mode == 'service_disable') {
-            safe_exec('sudo systemctl stop homebridge.service', 1);
+            safe_exec('systemctl stop homebridge.service', 1);
             sleep(3);
-            safe_exec('sudo systemctl disable homebridge.service', 1);
+            safe_exec('systemctl disable homebridge.service', 1);
             $this->redirect("?ok_msg=" . urlencode('Disable command sent'));
         }
 
@@ -169,50 +186,6 @@ class homekit extends module
         }
 
         if ($this->mode == 'sync') {
-
-            addClass('HomeBridgeClass');
-            $properties = array('from_get' => 'homebridge/from/get',
-                'from_identify' => 'homebridge/from/identify',
-                'from_response' => 'homebridge/from/response',
-                'from_set' => 'homebridge/from/set',
-                'to_add' => 'homebridge/to/add',
-                'to_add_service' => 'homebridge/to/add/service',
-                'to_get' => 'homebridge/to/get',
-                'to_remove' => 'homebridge/to/remove',
-                'to_remove_service' => 'homebridge/to/remove/service',
-                'to_set' => 'homebridge/to/set',
-                'to_set_accessoryinformation' => 'homebridge/to/set/accessoryinformation',
-                'to_set_reachability' => 'homebridge/to/set/reachability');
-            foreach ($properties as $p => $path) {
-                addClassProperty('HomeBridgeClass', $p);
-            }
-            addClassObject('HomeBridgeClass', 'HomeBridge');
-
-
-            SQLExec("DELETE FROM mqtt WHERE PATH LIKE 'homebridge%'");
-            foreach ($properties as $p => $path) {
-                addLinkedProperty('HomeBridge', $p, 'mqtt');
-                //SQLExec("DELETE FROM mqtt WHERE PATH='".$path."'");
-                $mqtt_rec=array();
-                $mqtt_rec['TITLE']=$path;
-                $mqtt_rec['PATH']=$path;
-                $mqtt_rec['LINKED_OBJECT']='HomeBridge';
-                $mqtt_rec['LINKED_PROPERTY']=$p;
-                SQLInsert('mqtt',$mqtt_rec);
-            }
-
-            include_once (DIR_MODULES.'mqtt/mqtt.class.php');
-            $mqtt=new mqtt();
-            $mqtt->getConfig();
-            $tmp=explode(',',$mqtt->config['MQTT_QUERY']);
-            $tmp=array_map('trim',$tmp);
-            if (!in_array('homebridge/from/#',$tmp)) {
-                $tmp[]='homebridge/from/#';
-                $mqtt->config['MQTT_QUERY']=implode(', ',$tmp);
-                $mqtt->saveConfig();
-                setGlobal('cycle_mqttControl', 'restart');
-            }
-
             //sync cameras
             if ($this->config['HOMEBRIDGE_HOME']) {
                 $homekit_config_file = $this->config['HOMEBRIDGE_HOME'] . '/config.json';
@@ -301,6 +274,12 @@ class homekit extends module
             if (is_dir($new_home)) {
                 $this->config['HOMEBRIDGE_HOME'] = $new_home;
             }
+			$this->config['MQTT_HOST'] = gr('mqtt_host', 'trim');
+            $this->config['MQTT_USERNAME'] = gr('mqtt_username', 'trim');
+            $this->config['MQTT_PASSWORD'] = gr('mqtt_password', 'trim');
+            $this->config['MQTT_AUTH'] = gr('mqtt_auth', 'int');
+            $this->config['MQTT_PORT'] = gr('mqtt_port', 'int');
+            setGlobal('cycle_homekit', 'restart');
             $this->saveConfig();
 
             $homebridge_id = strtoupper(gr('homebridge_id', 'trim'));
@@ -312,6 +291,7 @@ class homekit extends module
                 SaveFile($homekit_config_file, json_encode($homekit_data, JSON_PRETTY_PRINT));
                 $this->restartHomebridge();
             }
+			
             $this->redirect("?ok_msg=".urldecode('Settings have been saved.'));
         }
 
@@ -325,9 +305,8 @@ class homekit extends module
             $homebridge_home = '/home/pi/.homebridge';
         }
         @unlink($homebridge_home . '/cached/cachedAccessories');
-        safe_exec('sudo service homebridge stop', 1);
-        safe_exec('sudo service homebridge start', 1);
-        sleep(5);
+        safe_exec('sudo systemctl restart homebridge.service', 1);
+        sleep(10);
         include_once(DIR_MODULES . 'devices/devices.class.php');
         $dv = new devices();
         $dv->homebridgeSync(0, $force_refresh);
@@ -346,7 +325,7 @@ class homekit extends module
             $op = gr('op');
             if ($op == 'status') {
                 $output = array();
-                exec('sudo service homebridge status', $output);
+                exec('systemctl status homebridge.service', $output);
                 $result = implode("\n", $output);
                 $result = str_replace('active (running)','<font color="green"><b>active (running)</b></font>',$result);
                 $result = str_replace('inactive (dead)','<font color="red"><b>inactive (dead)</b></font>',$result);
@@ -366,6 +345,50 @@ class homekit extends module
      */
     function install($data = '')
     {
+		$class_id = SQLSelectOne("SELECT ID FROM classes WHERE TITLE='HomeBridgeClass'"); // удаляем класс
+		if(isset($class_id)){
+			include_once(DIR_MODULES . "classes/classes.class.php");
+			$classes_module = new classes();
+			$classes_module->delete_classes($class_id['ID']);
+			$properties = array('from_get' => 'homebridge/from/get',
+                'from_identify' => 'homebridge/from/identify',
+                'from_response' => 'homebridge/from/response',
+                'from_set' => 'homebridge/from/set',
+                'to_add' => 'homebridge/to/add',
+                'to_add_service' => 'homebridge/to/add/service',
+                'to_get' => 'homebridge/to/get',
+                'to_remove' => 'homebridge/to/remove',
+                'to_remove_service' => 'homebridge/to/remove/service',
+                'to_set' => 'homebridge/to/set',
+                'to_set_accessoryinformation' => 'homebridge/to/set/accessoryinformation',
+                'to_set_reachability' => 'homebridge/to/set/reachability');
+			//Удаляем связанные свойства и топики в модуле MQTT
+			SQLExec("DELETE FROM mqtt WHERE PATH LIKE 'homebridge%'");
+			foreach ($properties as $p => $path) {
+				removeLinkedProperty('HomeBridge', $p, 'mqtt');
+			}
+		}
+		////Удаляем подписку модуля MQTT
+		if(isModuleInstalled('mqtt')){
+			include_once (DIR_MODULES.'mqtt/mqtt.class.php');
+			$mqtt=new mqtt();
+			$mqtt->getConfig();
+			$this->config['MQTT_HOST'] = $mqtt->config['MQTT_HOST'];
+            $this->config['MQTT_USERNAME'] = $mqtt->config['MQTT_USERNAME'];
+            $this->config['MQTT_PASSWORD'] = $mqtt->config['MQTT_PASSWORD'];
+            $this->config['MQTT_AUTH'] = $mqtt->config['MQTT_AUTH'];
+            $this->config['MQTT_PORT'] = $mqtt->config['MQTT_PORT'];
+			$this->saveConfig();
+			$tmp=explode(',',$mqtt->config['MQTT_QUERY']);
+			$tmp=array_map('trim',$tmp);
+			if (in_array('homebridge/from/#',$tmp)) {
+				unset($tmp[array_search('homebridge/from/#', $tmp)]);
+				//$tmp[]='homebridge/from/#';
+				$mqtt->config['MQTT_QUERY']=implode(', ',$tmp);
+				$mqtt->saveConfig();
+				setGlobal('cycle_mqttControl', 'restart');
+			}
+		}
         parent::install();
     }
 // --------------------------------------------------------------------
