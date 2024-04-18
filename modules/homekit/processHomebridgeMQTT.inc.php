@@ -284,7 +284,7 @@ if ($topic == 'get' && $device['ID']) {
 			$payload['value'] = gg($device['LINKED_OBJECT'] . '.currentTargetValue');
         }
         else if ($data['characteristic'] == 'CurrentHeatingCoolingState'){
-			switch ($ac_mode) {//off = 0, heat = 1, cool = 2
+			switch (gg($device1['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2
 				case 'off':
 					$payload['value'] = 0;
 					break;
@@ -300,7 +300,7 @@ if ($topic == 'get' && $device['ID']) {
 			}
 		}
 		else if ($data['characteristic'] == 'TargetHeatingCoolingState'){
-			switch ($ac_mode) {//off = 0, heat = 1, cool = 2, auto = 3
+			switch (gg($device1['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2, auto = 3
 				case 'off':
 					$payload['value'] = 0;
 					break;
@@ -469,6 +469,22 @@ if ($topic == 'set' && $device['ID']) {
                 sg($device['LINKED_OBJECT'] . '.status', 0);
             } elseif ($data['value'] == 3) { // auto
                 sg($device['LINKED_OBJECT'] . '.disabled', 0);
+            }
+        }
+    }
+	if ($device['TYPE'] == 'ac') {
+        if ($data['characteristic'] == 'TargetTemperature') {
+            sg($device['LINKED_OBJECT'] . '.currentTargetValue', $data['value']);
+        }
+        if ($data['characteristic'] == 'TargetHeatingCoolingState') {
+            if ($data['value'] == 0) { // off
+                sg($device['LINKED_OBJECT'] . '.thermostat', "off");
+            } elseif ($data['value'] == 1) { // heat
+                sg($device['LINKED_OBJECT'] . '.thermostat', "heat");
+            } elseif ($data['value'] == 2) { // cool
+                sg($device['LINKED_OBJECT'] . '.thermostat', "cool");
+            } elseif ($data['value'] == 3) { // auto
+                sg($device['LINKED_OBJECT'] . '.thermostat', "auto");
             }
         }
     }

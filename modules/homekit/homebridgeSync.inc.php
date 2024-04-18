@@ -7,7 +7,7 @@ $debug_sync = 0;
 
 $qry = "1";
 
-if (isset($device_id)) {
+if (isset($device_id) && $device_id != 0) {
     $qry .= " AND ID=" . $device_id;
 }
 $devices = SQLSelect("SELECT * FROM devices WHERE $qry");
@@ -257,10 +257,12 @@ for ($i = 0; $i < $total; $i++) {
 
         case 'thermostat':
             $payload['service'] = 'Thermostat';
+			$payload['TargetTemperature']['minStep'] = 0.5;
             addToOperationsQueue("homekit_queue", "add", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			unset($payload['TargetTemperature']);
 
             $payload['characteristic'] = 'CurrentTemperature';
-            $payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.value');
+            $payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.value');;
             addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
 
             $payload['characteristic'] = 'TargetTemperature';
@@ -291,7 +293,9 @@ for ($i = 0; $i < $total; $i++) {
 			
 		case 'ac':
             $payload['service'] = 'Thermostat';
+			$payload['TargetTemperature']['minStep'] = 0.5;
             addToOperationsQueue("homekit_queue", "add", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			unset($payload['TargetTemperature']);
 
             $payload['characteristic'] = 'CurrentTemperature';
             $payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.value');
