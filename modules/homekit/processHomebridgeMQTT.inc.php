@@ -326,7 +326,7 @@ if ($topic == 'get' && $device['ID']) {
                 require($addon_path);
             }
     }
-    if (isset($payload['value'])) {
+    if (isset($payload['value']) && $payload['value'] != $data["cachedValue"]) {
 		addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
     }
 }
