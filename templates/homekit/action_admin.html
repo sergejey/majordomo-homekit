@@ -1,4 +1,5 @@
-[#if OK_MSG#]<div class="alert alert-success">[#OK_MSG#]</div>[#endif OK_MSG#]
+[#if OK_MSG#]<div class="alert alert-success">[#OK_MSG#]</div>[#endif OK_MSG#]  
+
 <div class="row">
     <div class="col-md-6">
         <h3>HomeBridge service</h3>
@@ -20,6 +21,9 @@
 
 
     </div>
+	<div class="col-md-6">
+        [#module name="xray" action="service" cycle="homekit"#]
+    </div>
     <div class="col-md-6">
         <div id='api_settings'>
             <form action="?" method="post" enctype="multipart/form-data" name="frmEdit" class="form-horizontal">
@@ -32,11 +36,42 @@
                     <label for="homebridge_id">MajorDoMo accessory id:</label>
                     <input type="text" name="homebridge_id" value="<#HOMEBRIDGE_ID#>" id="homebridge_id" class="form-control">
                 </div>
-                <div class="form-group">
-                        <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_UPDATE#></button>
-                        <input type="hidden" name="view_mode" value="update_settings">
-                        <input type="hidden" name="mode" value="update">
-                </div>
+				<a href="#" onClick="$('#mqtt_settings').toggle();return false;" class="btn btn-default"><i class="glyphicon glyphicon-wrench"></i> <#LANG_SETUP#> MQTT</a>
+				<div style="display:none" id='mqtt_settings'>
+					&nbsp;
+					<div class="form-group[#if ERR_MQTT_HOST#] has-error[#endif#]">
+						<label for="mqtt_host">MQTT host:</label>
+						<input type="text" name="mqtt_host" value="[#MQTT_HOST#]" class="form-control">
+					</div>
+					<div class="form-group[#if ERR_MQTT_PORT#] has-error[#endif#]">
+						<label for="mqtt_port">MQTT port:</label>
+						<input type="text" name="mqtt_port" value="[#MQTT_PORT#]" class="form-control">
+					</div>
+					<div class="form-group[#if ERR_MQTT_QUERY#] has-error[#endif#]">
+						<label for="mqtt_query">MQTT base topic:</label>
+						<input type="text" name="mqtt_query" value="[#MQTT_QUERY#]" class="form-control">
+					</div>
+					<div class="form-group>
+						<label class="control-label">Authorization required:</label>
+						<input type="radio" value="1" name="mqtt_auth" [#if MQTT_AUTH="1"#] checked[#endif#]> <#LANG_YES#>
+						<input type="radio" value="0" name="mqtt_auth" [#if MQTT_AUTH!="1"#] checked[#endif#]> <#LANG_NO#>
+						<br/>&nbsp;
+					</div>
+					<div class="form-group">
+						<label for="mqtt_username">MQTT <#LANG_USERNAME#>:</label>
+						<input type="text" name="mqtt_username" value="[#MQTT_USERNAME#]" class="form-control">
+					</div>
+					<div class="form-group">
+						<label for="mqtt_password">MQTT <#LANG_PASSWORD#>:</label>
+						<input type="password" name="mqtt_password" value="[#MQTT_PASSWORD#]" class="form-control">
+					</div>
+				</div>
+				<div class="form-group">
+					</br>
+					<button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_UPDATE#></button>
+					<input type="hidden" name="view_mode" value="update_settings">
+					<input type="hidden" name="mode" value="update">
+				</div>
             </form>
         </div>
 
