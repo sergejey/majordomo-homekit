@@ -4,7 +4,7 @@
 	registerError('homebridge', 'Отсутствуют необходимые переменные');
 	DebMes($params, 'homebridge');
 }*/
-if ($params['NEW_VALUE'] == $params['OLD_VALUE']) return;
+if (isset($params['NEW_VALUE']) && $params['NEW_VALUE'] == $params['OLD_VALUE']) return;
 
 $payload = array();
 $payload['name'] = $device1['LINKED_OBJECT'];
@@ -241,6 +241,15 @@ switch ($device1['TYPE']) {
 			default:
 				$payload['value'] = 3;
 				break;
+        }
+        break;
+	case 'tv':
+        $payload['service'] = 'Television';
+        $payload['characteristic'] = 'Active';
+        if ($params['NEW_VALUE']) {
+            $payload['value'] = 1;
+        } else {
+            $payload['value'] = 0;
         }
         break;
     /*

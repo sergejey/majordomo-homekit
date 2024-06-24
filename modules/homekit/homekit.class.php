@@ -127,10 +127,7 @@ class homekit extends module
         }
 
         $this->getConfig();
-        $out['HOMEBRIDGE_HOME'] = $this->config['HOMEBRIDGE_HOME'];
-        if (!$out['HOMEBRIDGE_HOME']) {
-            $out['HOMEBRIDGE_HOME'] = '/home/pi/.homebridge';
-        }
+        $out['HOMEBRIDGE_HOME'] = isset($this->config['HOMEBRIDGE_HOME']) ? $this->config['HOMEBRIDGE_HOME'] : '/home/pi/.homebridge';
 
         $homekit_config_file = $out['HOMEBRIDGE_HOME'] . '/config.json';
 
@@ -140,22 +137,13 @@ class homekit extends module
             $out['HOMEBRIDGE_ID'] = $homekit_data['bridge']['username'];
         }
 		
-		$out['MQTT_HOST'] = $this->config['MQTT_HOST'];
-		$out['MQTT_QUERY'] = $this->config['MQTT_QUERY'];
-		if (!$out['MQTT_QUERY']) {
-            $out['MQTT_QUERY'] = 'homebridge';
-        }
-        $out['MQTT_PORT'] = $this->config['MQTT_PORT'];
-        if (!$out['MQTT_HOST']) {
-            $out['MQTT_HOST'] = 'localhost';
-        }
-        if (!$out['MQTT_PORT']) {
-            $out['MQTT_PORT'] = '1883';
-        }
-        $out['MQTT_USERNAME'] = $this->config['MQTT_USERNAME'];
-        $out['MQTT_PASSWORD'] = $this->config['MQTT_PASSWORD'];
-        $out['MQTT_AUTH'] = $this->config['MQTT_AUTH'];
-        $out['DEBUG_MODE'] = $this->config['DEBUG_MODE'];
+		$out['MQTT_HOST'] = isset($this->config['MQTT_HOST']) ? $this->config['MQTT_HOST'] : 'localhost';
+		$out['MQTT_QUERY'] = isset($this->config['MQTT_QUERY']) ? $this->config['MQTT_QUERY'] : 'homebridge';
+        $out['MQTT_PORT'] = isset($this->config['MQTT_PORT']) ? $this->config['MQTT_PORT'] : '1883';
+        $out['MQTT_USERNAME'] = isset($this->config['MQTT_USERNAME']) ? $this->config['MQTT_USERNAME'] : '';
+        $out['MQTT_PASSWORD'] = isset($this->config['MQTT_PASSWORD']) ? $this->config['MQTT_PASSWORD'] : '';
+        $out['MQTT_AUTH'] = isset($this->config['MQTT_AUTH']) ? $this->config['MQTT_AUTH'] : '';
+        $out['DEBUG_MODE'] = isset($this->config['DEBUG_MODE']) ? $this->config['DEBUG_MODE'] : '';
 
         if ($this->mode == 'service_stop') {
             safe_exec('systemctl stop homebridge.service', 1);
@@ -373,11 +361,11 @@ class homekit extends module
 			include_once (DIR_MODULES.'mqtt/mqtt.class.php');
 			$mqtt=new mqtt();
 			$mqtt->getConfig();
-			$this->config['MQTT_HOST'] = $mqtt->config['MQTT_HOST'];
-            $this->config['MQTT_USERNAME'] = $mqtt->config['MQTT_USERNAME'];
-            $this->config['MQTT_PASSWORD'] = $mqtt->config['MQTT_PASSWORD'];
-            $this->config['MQTT_AUTH'] = $mqtt->config['MQTT_AUTH'];
-            $this->config['MQTT_PORT'] = $mqtt->config['MQTT_PORT'];
+			$this->config['MQTT_HOST'] = isset($mqtt->config['MQTT_HOST']) ? $mqtt->config['MQTT_HOST'] : 'localhost';
+            $this->config['MQTT_USERNAME'] = isset($mqtt->config['MQTT_USERNAME']) ? $mqtt->config['MQTT_USERNAME'] : '';
+            $this->config['MQTT_PASSWORD'] = isset($mqtt->config['MQTT_PASSWORD']) ? $mqtt->config['MQTT_PASSWORD'] : '';
+            $this->config['MQTT_AUTH'] = isset($mqtt->config['MQTT_AUTH']) ? $mqtt->config['MQTT_AUTH'] : '';
+            $this->config['MQTT_PORT'] = isset($mqtt->config['MQTT_PORT']) ? $mqtt->config['MQTT_PORT'] : 1883;
 			$this->saveConfig();
 			$tmp=explode(',',$mqtt->config['MQTT_QUERY']);
 			$tmp=array_map('trim',$tmp);

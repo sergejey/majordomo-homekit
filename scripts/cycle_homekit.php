@@ -25,17 +25,17 @@ if ($homekit_module->config['MQTT_AUTH']) {
 
 $host = 'localhost';
 
-if ($homekit_module->config['MQTT_HOST']) {
+if (isset($homekit_module->config['MQTT_HOST'])) {
     $host = $homekit_module->config['MQTT_HOST'];
 }
 
-if ($homekit_module->config['MQTT_PORT']) {
+if (isset($homekit_module->config['MQTT_PORT'])) {
     $port = $homekit_module->config['MQTT_PORT'];
 } else {
     $port = 1883;
 }
 
-if ($homekit_module->config['MQTT_QUERY']) {
+if (isset($homekit_module->config['MQTT_QUERY'])) {
     $query = $homekit_module->config['MQTT_QUERY'];
 } else {
     $query = 'homebridge';
@@ -61,6 +61,7 @@ $previousMillis = 0;
 $modehomebridge = false;
 $modetime = 0;
 
+$force_refresh = 0;
 include(DIR_MODULES . 'homekit/homebridgeSync.inc.php');
 
 while ($mqtt_client->proc()) {
@@ -82,7 +83,7 @@ while ($mqtt_client->proc()) {
 
     $currentMillis = round(microtime(true) * 10000);
 	
-	if($modehomebridge && $currentMillis - $modetime > 50000){
+	if($modehomebridge && $currentMillis - $modetime > 150000){
 		$modehomebridge = false;
 	}
 

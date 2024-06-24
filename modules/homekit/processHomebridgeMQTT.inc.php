@@ -12,7 +12,7 @@ if ($debug_sync) {
 
 $data = json_decode($msg, true);
 
-if ($data['name']) {
+if (isset($data['name'])) {
     $device = SQLSelectOne("SELECT * FROM devices WHERE LINKED_OBJECT LIKE '" . DBSafe($data['name']) . "'");
 }
 
@@ -253,7 +253,7 @@ if ($topic == 'get' && $device['ID']) {
 		}
 		else if ($data['characteristic'] == 'CurrentHeatingCoolingState'){
 			if (!gg($device['LINKED_OBJECT'] . '.disabled')) {
-				$payload['value'] = gg($device1['LINKED_OBJECT'] . '.relay_status'); //off = 0, heat = 1, cool = 2
+				$payload['value'] = gg($device['LINKED_OBJECT'] . '.relay_status'); //off = 0, heat = 1, cool = 2
 			} else {
 				$payload['value'] = 0;
 			}
@@ -277,7 +277,7 @@ if ($topic == 'get' && $device['ID']) {
 			$payload['value'] = gg($device['LINKED_OBJECT'] . '.currentTargetValue');
 		}
 		else if ($data['characteristic'] == 'CurrentHeatingCoolingState'){
-			switch (gg($device1['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2
+			switch (gg($device['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2
 				case 'off':
 					$payload['value'] = 0;
 					break;
@@ -293,7 +293,7 @@ if ($topic == 'get' && $device['ID']) {
 			}
 		}
 		else if ($data['characteristic'] == 'TargetHeatingCoolingState'){
-			switch (gg($device1['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2, auto = 3
+			switch (gg($device['LINKED_OBJECT'] . '.thermostat')) {//off = 0, heat = 1, cool = 2, auto = 3
 				case 'off':
 					$payload['value'] = 0;
 					break;
@@ -370,7 +370,7 @@ if ($topic == 'set' && $device['ID']) {
         }
         if ($data['characteristic'] == 'Brightness') {
             if ($data['value']) {
-                sg($device['LINKED_OBJECT'] . '.level', $data['value']);
+                sg($device['LINKED_OBJECT'] . '.level', $data['value'], 0, 'homekit_module');
             } else {
                 callMethodSafe($device['LINKED_OBJECT'] . '.turnOff');
             }
@@ -387,19 +387,19 @@ if ($topic == 'set' && $device['ID']) {
         $colorChange = false;
         if ($data['characteristic'] == 'Brightness') {
             if ($data['value']) {
-                sg($device['LINKED_OBJECT'] . '.brightness', $data['value']);
+                sg($device['LINKED_OBJECT'] . '.brightness', $data['value'], 0, 'homekit_module');
                 callMethodSafe($device['LINKED_OBJECT'] . '.turnOn');
             } else {
-                sg($device['LINKED_OBJECT'] . '.brightness', 0);
+                sg($device['LINKED_OBJECT'] . '.brightness', 0, 0, 'homekit_module');
                 callMethodSafe($device['LINKED_OBJECT'] . '.turnOff');
             }
         }
         if ($data['characteristic'] == 'Hue') {
-            sg($device['LINKED_OBJECT'] . '.hue', $data['value']);
+            sg($device['LINKED_OBJECT'] . '.hue', $data['value'], 0, 'homekit_module');
             $colorChange = true;
         }
         if ($data['characteristic'] == 'Saturation') {
-            sg($device['LINKED_OBJECT'] . '.saturation', $data['value']);
+            sg($device['LINKED_OBJECT'] . '.saturation', $data['value'], 0, 'homekit_module');
             $colorChange = true;
         }
         if ($colorChange) {
@@ -407,9 +407,9 @@ if ($topic == 'set' && $device['ID']) {
             $s = gg($device['LINKED_OBJECT'] . '.saturation');
             $b = gg($device['LINKED_OBJECT'] . '.lightness');
             $color = hsvToHex($h, $s, $b);
-            sg($device['LINKED_OBJECT'] . '.color', $color);
+            sg($device['LINKED_OBJECT'] . '.color', $color, 0, 'homekit_module');
             if ($color != '000000') {
-                sg($device['LINKED_OBJECT'] . '.colorSaved', $color);
+                sg($device['LINKED_OBJECT'] . '.colorSaved', $color, 0, 'homekit_module');
             }
         }
     }
@@ -424,10 +424,10 @@ if ($topic == 'set' && $device['ID']) {
         $colorChange = false;
         if ($data['characteristic'] == 'Brightness') {
             if ($data['value']) {
-                sg($device['LINKED_OBJECT'] . '.brightness', $data['value']);
+                sg($device['LINKED_OBJECT'] . '.brightness', $data['value'], 0, 'homekit_module');
                 callMethodSafe($device['LINKED_OBJECT'] . '.turnOn');
             } else {
-                sg($device['LINKED_OBJECT'] . '.brightness', 0);
+                sg($device['LINKED_OBJECT'] . '.brightness', 0, 0, 'homekit_module');
                 callMethodSafe($device['LINKED_OBJECT'] . '.turnOff');
             }
         }
@@ -449,42 +449,83 @@ if ($topic == 'set' && $device['ID']) {
     }
     if ($device['TYPE'] == 'thermostat') {
         if ($data['characteristic'] == 'TargetTemperature') {
-            sg($device['LINKED_OBJECT'] . '.currentTargetValue', $data['value']);
+            sg($device['LINKED_OBJECT'] . '.currentTargetValue', $data['value'], 0, 'homekit_module');
             if (gg($device['LINKED_OBJECT'] . '.status')) {
-                sg($device['LINKED_OBJECT'] . '.normalTargetValue', $data['value']);
+                sg($device['LINKED_OBJECT'] . '.normalTargetValue', $data['value'], 0, 'homekit_module');
             } else {
-                sg($device['LINKED_OBJECT'] . '.ecoTargetValue', $data['value']);
+                sg($device['LINKED_OBJECT'] . '.ecoTargetValue', $data['value'], 0, 'homekit_module');
             }
         }
         if ($data['characteristic'] == 'TargetHeatingCoolingState') {
             if ($data['value'] == 0) { // off
-                sg($device['LINKED_OBJECT'] . '.disabled', 1);
+                sg($device['LINKED_OBJECT'] . '.disabled', 1, 0, 'homekit_module');
             } elseif ($data['value'] == 1) { // heat
-                sg($device['LINKED_OBJECT'] . '.disabled', 0);
-                sg($device['LINKED_OBJECT'] . '.status', 1);
+                sg($device['LINKED_OBJECT'] . '.disabled', 0, 0, 'homekit_module');
+                sg($device['LINKED_OBJECT'] . '.status', 1, 0, 'homekit_module');
             } elseif ($data['value'] == 2) { // cool
-                sg($device['LINKED_OBJECT'] . '.disabled', 0);
-                sg($device['LINKED_OBJECT'] . '.status', 0);
+                sg($device['LINKED_OBJECT'] . '.disabled', 0, 0, 'homekit_module');
+                sg($device['LINKED_OBJECT'] . '.status', 0, 0, 'homekit_module');
             } elseif ($data['value'] == 3) { // auto
-                sg($device['LINKED_OBJECT'] . '.disabled', 0);
+                sg($device['LINKED_OBJECT'] . '.disabled', 0, 0, 'homekit_module');
             }
         }
     }
 	if ($device['TYPE'] == 'ac') {
         if ($data['characteristic'] == 'TargetTemperature') {
-            sg($device['LINKED_OBJECT'] . '.currentTargetValue', $data['value']);
+            sg($device['LINKED_OBJECT'] . '.currentTargetValue', $data['value'], 0, 'homekit_module');
         }
         if ($data['characteristic'] == 'TargetHeatingCoolingState') {
             if ($data['value'] == 0) { // off
-                sg($device['LINKED_OBJECT'] . '.thermostat', "off");
+                sg($device['LINKED_OBJECT'] . '.thermostat', "off", 0, 'homekit_module');
             } elseif ($data['value'] == 1) { // heat
-                sg($device['LINKED_OBJECT'] . '.thermostat', "heat");
+                sg($device['LINKED_OBJECT'] . '.thermostat', "heat", 0, 'homekit_module');
             } elseif ($data['value'] == 2) { // cool
-                sg($device['LINKED_OBJECT'] . '.thermostat', "cool");
+                sg($device['LINKED_OBJECT'] . '.thermostat', "cool", 0, 'homekit_module');
             } elseif ($data['value'] == 3) { // auto
-                sg($device['LINKED_OBJECT'] . '.thermostat', "auto");
+                sg($device['LINKED_OBJECT'] . '.thermostat', "auto", 0, 'homekit_module');
             }
         }
+    }
+	
+	if ($device['TYPE'] == 'tv') {
+		if ($data['characteristic'] == 'Active') {
+			sg($device['LINKED_OBJECT'] . '.status', $data['value'], 0, 'homekit_module');
+        }
+        if ($data['characteristic'] == 'VolumeSelector') {
+            $volume = gg($device['LINKED_OBJECT'] . '.volume');
+			if($data['value'] == 0){
+				sg($device['LINKED_OBJECT'] . '.volume', $volume + 1, 0, 'homekit_module');
+			}
+			else if($data['value'] == 1){
+				sg($device['LINKED_OBJECT'] . '.volume', $volume - 1, 0, 'homekit_module');
+			}
+        }
+		if ($data['characteristic'] == 'RemoteKey') {
+			if($data['value'] == 4){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "UP", 'homekit_module');
+			}
+			else if($data['value'] == 5){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "DOWN", 'homekit_module');
+			}
+			else if($data['value'] == 6){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "LEFT", 'homekit_module');
+			}
+			else if($data['value'] == 7){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "RIGHT", 'homekit_module');
+			}
+			else if($data['value'] == 8){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "ENTER", 'homekit_module');
+			}
+			else if($data['value'] == 9){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "BACK", 'homekit_module');
+			}
+			else if($data['value'] == 11){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "PLAY/PAUSE", 'homekit_module');
+			}
+			else if($data['value'] == 15){
+				sg($device['LINKED_OBJECT'] . '.hk_command', "INFO", 'homekit_module');
+			}
+		}
     }
 
     $addon_path = DIR_MODULES . '/devices/addons/' . $device['TYPE'] . '_processHomebridgeMQTT_from_set.php';
