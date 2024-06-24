@@ -148,7 +148,34 @@ for ($i = 0; $i < $total; $i++) {
             break;
 
         case 'tv':
-            //todo
+			$payload['service'] = 'Television';
+			$payload['RemoteKey'] = 'default';
+			addToOperationsQueue("homekit_queue", "add", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			unset($payload['RemoteKey']);
+			$payload['characteristic'] = 'Active';
+			$payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.status');
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			$payload['characteristic'] = 'SleepDiscoveryMode';
+			$payload['value'] = 1;
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			$payload['characteristic'] = 'ConfiguredName';
+			$payload['value'] = $devices[$i]['TITLE'];
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			unset($payload['characteristic']);
+			$payload['service_name'] .= "_vol";
+			$payload['service'] = 'TelevisionSpeaker';
+			$payload['VolumeSelector'] = 'default';
+			addToOperationsQueue("homekit_queue", "add/service", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			unset($payload['VolumeSelector']);
+			$payload['characteristic'] = 'Mute';
+			$payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.mute');
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			$payload['characteristic'] ='VolumeControlType';
+			$payload['value'] = 3;
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
+			$payload['characteristic'] = 'Volume';
+			$payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.volume');
+			addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
             break;
 
         case 'motion':
@@ -270,7 +297,7 @@ for ($i = 0; $i < $total; $i++) {
             addToOperationsQueue("homekit_queue", "set", json_encode($payload, JSON_UNESCAPED_UNICODE));
 
 			$payload['characteristic'] = 'CurrentHeatingCoolingState';
-			$disabled = gg($$devices[$i]['LINKED_OBJECT'] . '.disabled');
+			$disabled = gg($devices[$i]['LINKED_OBJECT'] . '.disabled');
 			if (!$disabled) {
 				$payload['value'] = gg($devices[$i]['LINKED_OBJECT'] . '.relay_status'); //off = 0, heat = 1, cool = 2
 			} else {
